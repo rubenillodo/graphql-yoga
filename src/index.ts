@@ -100,25 +100,7 @@ export class GraphQLServer {
     return this
   }
 
-  start(
-    options: Options,
-    callback?: ((options: Options) => void),
-  ): Promise<Server>
-  start(callback?: ((options: Options) => void)): Promise<Server>
-  start(
-    optionsOrCallback?: Options | ((options: Options) => void),
-    callback?: ((options: Options) => void),
-  ): Promise<Server> {
-    const options =
-      optionsOrCallback && typeof optionsOrCallback === 'function'
-        ? {}
-        : optionsOrCallback
-    const callbackFunc = callback
-      ? callback
-      : optionsOrCallback && typeof optionsOrCallback === 'function'
-        ? optionsOrCallback
-        : () => null
-
+  setUp(options: Options = {}): void {
     const app = this.express
 
     this.options = { ...this.options, ...options }
@@ -221,18 +203,22 @@ export class GraphQLServer {
     if (!this.executableSchema) {
       throw new Error('No schema defined')
     }
+  }
+
+  start(callback: ((options: Options) => void) = () => null): Promise<Server> {
+    const app = this.express
 
     return new Promise((resolve, reject) => {
       if (!this.options.subscriptions) {
         app.listen(this.options.port, () => {
-          callbackFunc(this.options)
+          callback(this.options)
           resolve()
         })
       } else {
         const combinedServer = createServer(app)
 
         combinedServer.listen(this.options.port, () => {
-          callbackFunc(this.options)
+          callback(this.options)
           resolve(combinedServer)
         })
 
